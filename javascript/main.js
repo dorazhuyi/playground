@@ -24,28 +24,99 @@ window.onload = function() {
         sprite.frame = frame;
         sprite.x = pos[0];
         sprite.y = pos[1];
+        sprite.initialX = pos[0];
+        sprite.initialY = pos[1];
         return sprite;
+    }
+
+    function getFlashing(dur, times, frame1, frame2, odd, stop) {
+        var arr = new Array();
+        for (var j=0; j<times; j++) {
+            for (var i=0; i<dur; i++) {
+                arr[i+2*j*dur]     = frame1;
+                arr[i+(2*j+1)*dur] = frame2;
+            }
+        }
+        if(odd) {
+            for(var i=0; i<dur; i++) {
+                arr[arr.length] = frame1;
+            }
+        }
+        if(stop) {
+            arr[arr.length] = null;
+        }
+        return arr;
+    }
+
+    function eventWithIn(evt, obj) {
+        if( evt.localX >= obj.x && evt.localX <= obj.x + obj.width
+            && evt.localY >= obj.y && evt.localY <= obj.y + obj.height) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     game.onload = function() {
         console.log("Let's start!");
 
         // Create sprites
-        var greenBow  = getSprite(BOWS_IMAGE, 0, [125, 60], [10, 320]);
-        var pinkBow   = getSprite(BOWS_IMAGE, 1, [125, 60], [145, 320]);
-        var purpleBow = getSprite(BOWS_IMAGE, 2, [125, 60], [280, 320]);
+        var bowSize = [125, 60];
+        var bowInitialPos = {
+            green  : [10, 320],
+            pink   : [145, 320],
+            purple : [280, 320],
+            dotted : [145, 400]
+        };
+        var flash = getFlashing(6, 3, 3, 4, true, true);
+        var bows = {
+            green  : getSprite(BOWS_IMAGE, 0, bowSize, bowInitialPos.green),
+            pink   : getSprite(BOWS_IMAGE, 1, bowSize, bowInitialPos.pink),
+            purple : getSprite(BOWS_IMAGE, 2, bowSize, bowInitialPos.purple),
+            dotted : getSprite(BOWS_IMAGE, flash, bowSize, bowInitialPos.dotted)
+        }
+        var strawSize = [125, 300]
 
         var titleScene, choiceScene, rescueScene;
 
         // Start choosing bows
         choiceScene = new Scene();
-        choiceScene.addChild(greenBow);
-        choiceScene.addChild(pinkBow);
-        choiceScene.addChild(purpleBow);
+        choiceScene.addChild(bows.green);
+        choiceScene.addChild(bows.pink);
+        choiceScene.addChild(bows.purple);
+        choiceScene.addChild(bows.dotted);
+
+        var bowTarget;
+
+        choiceScene.on('touchstart', function(evt) {
+            if(eventWithIn(evt, bows.green)) {
+                bowTarget = bows.green;
+            } else if (eventWithIn(evt, bows.pink)) {
+                bowTarget = bows.pink;
+            } else if (eventWithIn(evt, bows.purple)) {
+                bowTarget = bows.purple;
+            } else {
+                bowTarget = undefined;
+            }
+        });
 
         choiceScene.on('touchmove', function(evt) {
-            greenBow.x = evt.localX - greenBow.width/2;
-            greenBow.y = evt.localY - greenBow.height/2;
+            if(bowTarget) {
+                bowTarget.x = evt.localX - bowTarget.width/2;
+                bowTarget.y = evt.localY - bowTarget.height/2;
+            }
+        });
+
+        choiceScene.on('touchend', function(evt) {
+            if(bowTarget) {
+                if(eventWithIn(evt, bows.dotted)) {
+                     
+                } else {
+                    bowTarget.x = bowTarget.initialX;
+                    bowTarget.y = bowTarget.initialY;  
+                }
+                
+            }
         });
 
         game.pushScene(choiceScene);
