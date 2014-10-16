@@ -48,9 +48,18 @@ window.onload = function() {
         return arr;
     }
 
-    function eventWithIn(evt, obj) {
+    function eventWithInObj(evt, obj) {
         if( evt.localX >= obj.x && evt.localX <= obj.x + obj.width
             && evt.localY >= obj.y && evt.localY <= obj.y + obj.height) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function eventWithInRange(evt, topLeft, botRight) {
+        if( evt.localX >= topLeft[0] && evt.localX <= botRight[0]
+            && evt.localY >= topLeft[1] && evt.localY <= botRight[1]) {
             return true;
         } else {
             return false;
@@ -62,62 +71,93 @@ window.onload = function() {
 
         // Create sprites
         var bowSize = [125, 60];
-        var bowInitialPos = {
-            green  : [10, 320],
-            pink   : [145, 320],
-            purple : [280, 320],
-            dotted : [145, 400]
-        };
-        var flash = getFlashing(6, 3, 3, 4, true, true);
-        var bows = {
-            green  : getSprite(BOWS_IMAGE, 0, bowSize, bowInitialPos.green),
-            pink   : getSprite(BOWS_IMAGE, 1, bowSize, bowInitialPos.pink),
-            purple : getSprite(BOWS_IMAGE, 2, bowSize, bowInitialPos.purple),
-            dotted : getSprite(BOWS_IMAGE, flash, bowSize, bowInitialPos.dotted)
+        // bow color order: green, pink, purple, dotted flash, dotted
+        var bowInitialPos = [[10, 220], [145, 220], [280, 220], [145, 318]];
+        var flash = getFlashing(12, 3, 4, 3, false, true);
+        var bows = [];
+        for(var i=0; i<3; i++) {
+            bows[i] = getSprite(BOWS_IMAGE, i, bowSize, bowInitialPos[i]);
         }
-        var strawSize = [125, 300]
+        bows[3] = getSprite(BOWS_IMAGE, flash, bowSize, bowInitialPos[3]);
+        bows[4] = getSprite(BOWS_IMAGE, 3, bowSize, bowInitialPos[3]);
+        console.log(bows);
 
-        var titleScene, choiceScene, rescueScene;
+        // Straw color order: green, pink, purple, origin
+        var strawSize = [125, 300];
+        var strawInitialPos = [145, 300];
+        var straw = getSprite(STRAW_IMAGE, 0, strawSize, strawInitialPos);
 
-        // Start choosing bows
+        var titleScene, choiceScene, juiceScene, rescueScene;
+
+        // ==================  Start of Choice Scene =========================
         choiceScene = new Scene();
-        choiceScene.addChild(bows.green);
-        choiceScene.addChild(bows.pink);
-        choiceScene.addChild(bows.purple);
-        choiceScene.addChild(bows.dotted);
+        choiceScene.addChild(straw);
+        for(var i=0; i<4; i++) {
+            choiceScene.addChild(bows[i]);
+        }
 
-        var bowTarget;
+        var targetIndex;
+        var isReset;
+        var preIndex;
+        var move;
 
         choiceScene.on('touchstart', function(evt) {
-            if(eventWithIn(evt, bows.green)) {
-                bowTarget = bows.green;
-            } else if (eventWithIn(evt, bows.pink)) {
-                bowTarget = bows.pink;
-            } else if (eventWithIn(evt, bows.purple)) {
-                bowTarget = bows.purple;
-            } else {
-                bowTarget = undefined;
+            if(targetIndex > -1 && isReset === undefined) {
+                choiceScene.removeChild(bows[3]);
+                choiceScene.addChild(bows[4]);
             }
+            //check only for actual bows
+            for(var i=0; i<3; i++) {
+                if(eventWithInObj(evt, bows[i])) {
+                    if(targetIndex && preIndex !== i) {
+                        bows[targetIndex].x = bowInitialPos[targetIndex][0];
+                        bows[targetIndex].y = bowInitialPos[targetIndex][1];
+                    }
+                    targetIndex = i;
+                    isReset = 0;
+                    move = 1;
+                }
+            }
+            if(targetIndex > -1 && eventWithInRange(evt, bowInitialPos[3], 
+                [bowInitialPos[3][0]+bowSize[0], bowInitialPos[3][1]+bowSize[1]]))
+            {
+                isReset = 1;
+                choiceScene.addChild(bows[4]);
+                move = 1;
+            }
+            console.log("targetIndex: " + targetIndex + " isReset: " + isReset + " preIndex: " + preIndex);
         });
 
         choiceScene.on('touchmove', function(evt) {
-            if(bowTarget) {
-                bowTarget.x = evt.localX - bowTarget.width/2;
-                bowTarget.y = evt.localY - bowTarget.height/2;
+            if(targetIndex > -1) {
+                bows[targetIndex].x = evt.localX - bows[targetIndex].width/2;
+                bows[targetIndex].y = evt.localY - bows[targetIndex].height/2;
             }
+            console.log("targetIndex: " + targetIndex + " isReset: " + isReset + " preIndex: " + preIndex);
+
         });
 
         choiceScene.on('touchend', function(evt) {
-            if(bowTarget) {
-                if(eventWithIn(evt, bows.dotted)) {
-                     
-                } else {
-                    bowTarget.x = bowTarget.initialX;
-                    bowTarget.y = bowTarget.initialY;  
-                }
-                
+            if(targetIndex > -1) {
+                if(isReset) {
+                    bows[targetIndex].x = bowInitialPos[targetIndex][0];
+                    bows[targetIndex].y = bowInitialPos[targetIndex][1];
+                    isReset = 0;
+                } else if (eventWithInObj(evt, bows[3])) {
+                    choiceScene.removeChild(bows[4]);
+                    bows[targetIndex].x = bowInitialPos[3][0];
+                    bows[targetIndex].y = bowInitialPos[3][1];
+                } else if (move) {
+                    bows[targetIndex].x = bowInitialPos[targetIndex][0];
+                    bows[targetIndex].y = bowInitialPos[targetIndex][1];
+                } 
+                preIndex = targetIndex;
+                move = 0;
             }
+            console.log("targetIndex: " + targetIndex + " isReset: " + isReset + " preIndex: " + preIndex);
+
         });
+        // ==================  End of Choice Scene =========================
 
         game.pushScene(choiceScene);
 
