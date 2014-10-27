@@ -1,11 +1,143 @@
 /***************
+A Birthday gift for Naomi's friend
 
-
-
+All copyright by Yi Zhu (dora.zhuyi@gmail.com)
+08 - 12, 2014
 ****************/
 
 
 enchant();
+
+Utility = (function() {
+
+    return {
+
+        flashing : function(dur, times, frame1, frame2, odd, stop) {
+            var arr = [];
+            for (var j=0; j<times; j++) {
+                for (var i=0; i<dur; i++) {
+                    arr[i+2*j*dur]     = frame1;
+                    arr[i+(2*j+1)*dur] = frame2;
+                }
+            }
+            if(odd) {
+                for(var i=0; i<dur; i++) {
+                    arr[arr.length] = frame1;
+                }
+            }
+            if(stop) {
+                arr[arr.length] = null;
+            }
+            return arr;
+        }
+    };
+}());
+
+// Bow 
+var Bow = Class.create(Sprite,{
+    initialize : function(config) {
+        Sprite.apply(this, [125, 60]);
+        
+        this.image = config.img;
+        this.frame = config.frame;
+        this.x = config.initX;
+        this.y = config.initY;
+
+        this.isReset = false;
+
+        this.addEventListener(Event.TOUCH_START, function(){
+            config.label.text = "Hmmmmm...";
+            if(this.within(config.target, 60/2)) {
+                this.isReset = true;
+            } else {
+                this.isReset = false;
+            }
+        });
+
+        this.addEventListener(Event.TOUCH_MOVE, function(evt){
+            this.x = evt.x - 125/2;
+            this.y = evt.y - 60/2;
+        });
+
+        this.addEventListener(Event.TOUCH_END, function(evt){
+            if(this.within(config.target, 60/2))
+            {
+                this.x = config.target.x;
+                this.y = config.target.y;
+                config.label.text = "literally, the gayest";
+
+                if(!this.isReset) {
+                    config.frameStack.push(this.frame);
+                    config.frameStack.sort(function(a, b) {
+                        return a - b;
+                    });
+                }
+
+                config.scene.addChild(config.hand);
+            } else {
+                this.x = config.initX;
+                this.y = config.initY;
+                
+                if(this.isReset) {
+                    config.frameStack.pop();
+                    if(config.frameStack.length < 1) {
+                        config.scene.removeChild(config.hand);
+                    }
+                }
+            }
+            console.log(config.frameStack);
+        });
+    }
+});
+
+var Straw = Class.create(Sprite,{
+    initialize : function(config) {
+        Sprite.apply(this, [125, 300]);
+        
+        this.image = config.img;
+        this.frame = 3;
+        this.x = 145;
+        this.y = 200;
+    }
+});
+
+var Hand = Class.create(Sprite,{
+    initialize : function(config) {
+        Sprite.apply(this, [66, 54]);
+        
+        this.image = config.img;
+        this.frame = 0;
+        this.x = 180;
+        this.y = 280;
+
+        this.removeNodes = [];
+
+        this.addEventListener(Event.TOUCH_START, function(){
+            this.frame = 1;
+            this.x = 170;
+            this.removeNodes.forEach(function(element, index, array) {
+                config.scene.removeChild(element);
+            });
+            config.straw.frame = config.frameStack[config.frameStack.length - 1];
+        });
+
+        this.addEventListener(Event.TOUCH_MOVE, function(evt){
+            this.y = evt.y - 54/2;
+            config.straw.y = evt.y - 80 - 54/2;
+        });
+    }
+});
+
+var Box = Class.create(Sprite,{
+    initialize : function(config) {
+        Sprite.apply(this, [66, 54]);
+        
+        this.image = config.img;
+        this.frame = 0;
+        this.x = 180;
+        this.y = 280;
+    }
+});
 
 window.onload = function() {
 
@@ -15,148 +147,68 @@ window.onload = function() {
     // Images
     var BOWS_IMAGE  = "res/img/bows.png";
     var STRAW_IMAGE = "res/img/straws.png";
+    var HANDS_IMAGE = "res/img/hands.png";
     game.preload(BOWS_IMAGE);
     game.preload(STRAW_IMAGE);
-
-    function getSprite(img, frame, size, pos) {
-        var sprite = new Sprite(size[0], size[1]);
-        sprite.image = game.assets[img];
-        sprite.frame = frame;
-        sprite.x = pos[0];
-        sprite.y = pos[1];
-        sprite.initialX = pos[0];
-        sprite.initialY = pos[1];
-        return sprite;
-    }
-
-    function getFlashing(dur, times, frame1, frame2, odd, stop) {
-        var arr = new Array();
-        for (var j=0; j<times; j++) {
-            for (var i=0; i<dur; i++) {
-                arr[i+2*j*dur]     = frame1;
-                arr[i+(2*j+1)*dur] = frame2;
-            }
-        }
-        if(odd) {
-            for(var i=0; i<dur; i++) {
-                arr[arr.length] = frame1;
-            }
-        }
-        if(stop) {
-            arr[arr.length] = null;
-        }
-        return arr;
-    }
-
-    function eventWithInObj(evt, obj) {
-        if( evt.localX >= obj.x && evt.localX <= obj.x + obj.width
-            && evt.localY >= obj.y && evt.localY <= obj.y + obj.height) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    function eventWithInRange(evt, topLeft, botRight) {
-        if( evt.localX >= topLeft[0] && evt.localX <= botRight[0]
-            && evt.localY >= topLeft[1] && evt.localY <= botRight[1]) {
-            return true;
-        } else {
-            return false;
-        }
-    }
+    game.preload(HANDS_IMAGE);
+    
 
     game.onload = function() {
         console.log("Let's start!");
-
-        // Create sprites
-        var bowSize = [125, 60];
-        // bow color order: green, pink, purple, dotted flash, dotted
-        var bowInitialPos = [[10, 220], [145, 220], [280, 220], [145, 318]];
-        var flash = getFlashing(12, 3, 4, 3, false, true);
-        var bows = [];
-        for(var i=0; i<3; i++) {
-            bows[i] = getSprite(BOWS_IMAGE, i, bowSize, bowInitialPos[i]);
-        }
-        bows[3] = getSprite(BOWS_IMAGE, flash, bowSize, bowInitialPos[3]);
-        bows[4] = getSprite(BOWS_IMAGE, 3, bowSize, bowInitialPos[3]);
-        console.log(bows);
-
-        // Straw color order: green, pink, purple, origin
-        var strawSize = [125, 300];
-        var strawInitialPos = [145, 300];
-        var straw = getSprite(STRAW_IMAGE, 0, strawSize, strawInitialPos);
 
         var titleScene, choiceScene, juiceScene, rescueScene;
 
         // ==================  Start of Choice Scene =========================
         choiceScene = new Scene();
+
+        var label = new Label();
+        label.x = 145;
+        label.y = 50;
+        label.color = "black";
+        label.font = "16px black";
+        choiceScene.addChild(label);
+
+        var straw = new Straw({
+            img     : game.assets[STRAW_IMAGE]
+        });
         choiceScene.addChild(straw);
-        for(var i=0; i<4; i++) {
-            choiceScene.addChild(bows[i]);
+
+        var dottedBow = new Sprite(125, 60);
+        dottedBow.image = game.assets[BOWS_IMAGE];
+        dottedBow.x = 145;
+        dottedBow.y = 218;
+        dottedBow.frame = Utility.flashing(12, 3, 4, 3, false, true);
+        choiceScene.addChild(dottedBow);
+
+        var frameStack = [];
+
+        var hand = new Hand({
+            img        : game.assets[HANDS_IMAGE],
+            straw      : straw,
+            frameStack : frameStack,
+            scene      : choiceScene
+        });
+
+        var bows = [];
+        for(var i=0; i<3; i++) {
+            bows[i] = new Bow({
+                img         : game.assets[BOWS_IMAGE],
+                frame       : i,
+                initX       : 10+i*135,
+                initY       : 120,
+                target      : dottedBow,
+                label       : label,
+                hand        : hand,
+                frameStack  : frameStack,
+                scene       : choiceScene
+
+            });
+            choiceScene.addChild(bows[i])
         }
 
-        var targetIndex;
-        var isReset;
-        var preIndex;
-        var move;
+        hand.removeNodes = [bows[0], bows[1], bows[2], dottedBow];
 
-        choiceScene.on('touchstart', function(evt) {
-            if(targetIndex > -1 && isReset === undefined) {
-                choiceScene.removeChild(bows[3]);
-                choiceScene.addChild(bows[4]);
-            }
-            //check only for actual bows
-            for(var i=0; i<3; i++) {
-                if(eventWithInObj(evt, bows[i])) {
-                    if(targetIndex && preIndex !== i) {
-                        bows[targetIndex].x = bowInitialPos[targetIndex][0];
-                        bows[targetIndex].y = bowInitialPos[targetIndex][1];
-                    }
-                    targetIndex = i;
-                    isReset = 0;
-                    move = 1;
-                }
-            }
-            if(targetIndex > -1 && eventWithInRange(evt, bowInitialPos[3], 
-                [bowInitialPos[3][0]+bowSize[0], bowInitialPos[3][1]+bowSize[1]]))
-            {
-                isReset = 1;
-                choiceScene.addChild(bows[4]);
-                move = 1;
-            }
-            console.log("targetIndex: " + targetIndex + " isReset: " + isReset + " preIndex: " + preIndex);
-        });
 
-        choiceScene.on('touchmove', function(evt) {
-            if(targetIndex > -1) {
-                bows[targetIndex].x = evt.localX - bows[targetIndex].width/2;
-                bows[targetIndex].y = evt.localY - bows[targetIndex].height/2;
-            }
-            console.log("targetIndex: " + targetIndex + " isReset: " + isReset + " preIndex: " + preIndex);
-
-        });
-
-        choiceScene.on('touchend', function(evt) {
-            if(targetIndex > -1) {
-                if(isReset) {
-                    bows[targetIndex].x = bowInitialPos[targetIndex][0];
-                    bows[targetIndex].y = bowInitialPos[targetIndex][1];
-                    isReset = 0;
-                } else if (eventWithInObj(evt, bows[3])) {
-                    choiceScene.removeChild(bows[4]);
-                    bows[targetIndex].x = bowInitialPos[3][0];
-                    bows[targetIndex].y = bowInitialPos[3][1];
-                } else if (move) {
-                    bows[targetIndex].x = bowInitialPos[targetIndex][0];
-                    bows[targetIndex].y = bowInitialPos[targetIndex][1];
-                } 
-                preIndex = targetIndex;
-                move = 0;
-            }
-            console.log("targetIndex: " + targetIndex + " isReset: " + isReset + " preIndex: " + preIndex);
-
-        });
         // ==================  End of Choice Scene =========================
 
         game.pushScene(choiceScene);
