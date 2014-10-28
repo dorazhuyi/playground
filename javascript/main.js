@@ -33,111 +33,7 @@ Utility = (function() {
     };
 }());
 
-// Bow 
-var Bow = Class.create(Sprite,{
-    initialize : function(config) {
-        Sprite.apply(this, [125, 60]);
-        
-        this.image = config.img;
-        this.frame = config.frame;
-        this.x = config.initX;
-        this.y = config.initY;
 
-        this.isReset = false;
-
-        this.addEventListener(Event.TOUCH_START, function(){
-            config.label.text = "Hmmmmm...";
-            if(this.within(config.target, 60/2)) {
-                this.isReset = true;
-            } else {
-                this.isReset = false;
-            }
-        });
-
-        this.addEventListener(Event.TOUCH_MOVE, function(evt){
-            this.x = evt.x - 125/2;
-            this.y = evt.y - 60/2;
-        });
-
-        this.addEventListener(Event.TOUCH_END, function(evt){
-            if(this.within(config.target, 60/2))
-            {
-                this.x = config.target.x;
-                this.y = config.target.y;
-                config.label.text = "literally, the gayest";
-
-                if(!this.isReset) {
-                    config.frameStack.push(this.frame);
-                    config.frameStack.sort(function(a, b) {
-                        return a - b;
-                    });
-                }
-
-                config.scene.addChild(config.hand);
-            } else {
-                this.x = config.initX;
-                this.y = config.initY;
-                
-                if(this.isReset) {
-                    config.frameStack.pop();
-                    if(config.frameStack.length < 1) {
-                        config.scene.removeChild(config.hand);
-                    }
-                }
-            }
-            console.log(config.frameStack);
-        });
-    }
-});
-
-var Straw = Class.create(Sprite,{
-    initialize : function(config) {
-        Sprite.apply(this, [125, 300]);
-        
-        this.image = config.img;
-        this.frame = 3;
-        this.x = 145;
-        this.y = 200;
-    }
-});
-
-var Hand = Class.create(Sprite,{
-    initialize : function(config) {
-        Sprite.apply(this, [66, 54]);
-        
-        this.image = config.img;
-        this.frame = 0;
-        this.x = 180;
-        this.y = 280;
-
-        this.removeNodes = [];
-
-        this.addEventListener(Event.TOUCH_START, function(){
-            this.frame = 1;
-            this.x = 170;
-            this.removeNodes.forEach(function(element, index, array) {
-                config.scene.removeChild(element);
-            });
-            config.straw.frame = config.frameStack[config.frameStack.length - 1];
-        });
-
-        this.addEventListener(Event.TOUCH_MOVE, function(evt){
-            this.y = evt.y - 54/2;
-            config.straw.y = evt.y - 80 - 54/2;
-        });
-    }
-});
-
-var Box = Class.create(Sprite,{
-    initialize : function(config) {
-        Sprite.apply(this, [66, 54]);
-        
-        this.image = config.img;
-        this.frame = 0;
-        this.x = 180;
-        this.y = 280;
-    }
-});
 
 window.onload = function() {
 
@@ -148,70 +44,217 @@ window.onload = function() {
     var BOWS_IMAGE  = "res/img/bows.png";
     var STRAW_IMAGE = "res/img/straws.png";
     var HANDS_IMAGE = "res/img/hands.png";
+    var BOX_IMAGE = "res/img/box.png";
+    var SPLASH_IMAGE = "res/img/splash.png";
     game.preload(BOWS_IMAGE);
     game.preload(STRAW_IMAGE);
     game.preload(HANDS_IMAGE);
+    game.preload(BOX_IMAGE);
+    game.preload(SPLASH_IMAGE);
     
 
     game.onload = function() {
         console.log("Let's start!");
 
-        var titleScene, choiceScene, juiceScene, rescueScene;
+        var titleScene, choiceScene, rescueScene;
+        choiceScene = new Scene();
+        rescueScene = new Scene();
+
+
+        //============ Starte Define Object Classes ===============
+        // Bow 
+        var Bow = Class.create(Sprite,{
+            initialize : function(config) {
+                Sprite.apply(this, [125, 60]);
+                
+                this.image = game.assets[BOWS_IMAGE];
+                this.frame = config.frame;
+                this.x = config.initX;
+                this.y = config.initY;
+
+                this.isReset = false;
+
+                this.addEventListener(Event.TOUCH_START, function(){
+                    config.label.text = "Hmmmmm...";
+                    if(this.within(config.target, 60/2)) {
+                        this.isReset = true;
+                    } else {
+                        this.isReset = false;
+                    }
+                });
+
+                this.addEventListener(Event.TOUCH_MOVE, function(evt){
+                    this.x = evt.x - 125/2;
+                    this.y = evt.y - 60/2;
+                });
+
+                this.addEventListener(Event.TOUCH_END, function(evt){
+                    if(this.within(config.target, 60/2))
+                    {
+                        this.x = config.target.x;
+                        this.y = config.target.y;
+                        config.label.text = "literally, the gayest";
+
+                        if(!this.isReset) {
+                            config.frameStack.push(this.frame);
+                            config.frameStack.sort(function(a, b) {
+                                return a - b;
+                            });
+                        }
+
+                        choiceScene.addChild(config.hand);
+                    } else {
+                        this.x = config.initX;
+                        this.y = config.initY;
+                        
+                        if(this.isReset) {
+                            config.frameStack.pop();
+                            if(config.frameStack.length < 1) {
+                                choiceScene.removeChild(config.hand);
+                            }
+                        }
+                    }
+                });
+
+                choiceScene.addChild(this);
+            }
+        });
+
+        var Straw = Class.create(Sprite,{
+            initialize : function(config) {
+                Sprite.apply(this, [125, 300]);
+                
+                this.image = game.assets[STRAW_IMAGE];
+                this.frame = 3;
+                this.x = 145;
+                this.y = 100;
+
+                choiceScene.addChild(this);
+            }
+        });
+
+        var Hand = Class.create(Sprite,{
+            initialize : function(config) {
+                Sprite.apply(this, [66, 54]);
+                
+                this.image = game.assets[HANDS_IMAGE];
+                this.frame = 0;
+                this.x = 180;
+                this.y = 180;
+
+                this.removeNodes = [];
+
+                this.hasBox = false;
+
+                this.addEventListener(Event.TOUCH_START, function(){
+                    this.frame = 1;
+                    this.x = 170;
+                    this.removeNodes.forEach(function(element, index, array) {
+                        choiceScene.removeChild(element);
+                    });
+                    config.straw.frame = config.frameStack[config.frameStack.length - 1];
+                    if(!this.hasBox) {
+                        choiceScene.addChild(config.box);
+                        this.hasBox = true;
+                    }
+                });
+
+                this.addEventListener(Event.TOUCH_MOVE, function(evt){
+                    this.y = evt.y - 54/2;
+                    config.straw.y = evt.y - 80 - 54/2;
+                    if(this.within(config.box, 490 - 180)
+                        && this.y > 180 + (490 - 400)
+                        && config.box.x > (145 - 112/2) && config.box.x < (145 + 112/2)) 
+                    {
+                        config.box.tl.pause();
+                        this.clearEventListener();
+                        this.splash();
+                        // after splash finishes, move to next scene
+                        choiceScene.tl.delay(120)
+                                      .then(function(){game.replaceScene(rescueScene);});
+                        
+                    }
+                });
+            },
+
+            splash : function() {
+                console.log("splash triggered")
+                var bg = new Sprite(480, 640);
+                bg.image = game.assets[SPLASH_IMAGE];
+                bg.frame = Utility.flashing(30, 1, 0, 1, false, false).concat(Utility.flashing(30, 1, 2, 3, false, true));
+                choiceScene.addChild(bg);
+            }
+        });
+
+        var Box = Class.create(Sprite,{
+            initialize : function(config) {
+                Sprite.apply(this, [112, 150]);
+                this.x = 0;
+                this.y = 490;
+                
+                this.image = game.assets[BOX_IMAGE];;
+                this.frame = 0;
+
+                this.addEventListener(Event.ADDED_TO_SCENE, function(evt){
+                    this.tl.moveBy(368, 0, Math.floor(Math.random()*(45-15))+15)
+                           .moveBy(-368, 0, Math.floor(Math.random()*(45-15))+15)
+                           .loop();
+                });
+            }
+        });
+        // ================== End Define Object Classes ==================
+
+        
 
         // ==================  Start of Choice Scene =========================
-        choiceScene = new Scene();
+        
 
         var label = new Label();
-        label.x = 145;
-        label.y = 50;
+        label.x = 345;
+        label.y = 250;
         label.color = "black";
         label.font = "16px black";
         choiceScene.addChild(label);
 
-        var straw = new Straw({
-            img     : game.assets[STRAW_IMAGE]
-        });
-        choiceScene.addChild(straw);
+        var box = new Box();
+        var straw = new Straw();
 
         var dottedBow = new Sprite(125, 60);
         dottedBow.image = game.assets[BOWS_IMAGE];
         dottedBow.x = 145;
-        dottedBow.y = 218;
+        dottedBow.y = 118;
         dottedBow.frame = Utility.flashing(12, 3, 4, 3, false, true);
         choiceScene.addChild(dottedBow);
 
         var frameStack = [];
 
         var hand = new Hand({
-            img        : game.assets[HANDS_IMAGE],
             straw      : straw,
-            frameStack : frameStack,
-            scene      : choiceScene
+            box        : box,
+            frameStack : frameStack
         });
 
         var bows = [];
         for(var i=0; i<3; i++) {
             bows[i] = new Bow({
-                img         : game.assets[BOWS_IMAGE],
                 frame       : i,
                 initX       : 10+i*135,
-                initY       : 120,
+                initY       : 20,
                 target      : dottedBow,
                 label       : label,
                 hand        : hand,
-                frameStack  : frameStack,
-                scene       : choiceScene
+                frameStack  : frameStack
 
             });
-            choiceScene.addChild(bows[i])
+            
         }
 
         hand.removeNodes = [bows[0], bows[1], bows[2], dottedBow];
 
+        game.pushScene(choiceScene);
 
         // ==================  End of Choice Scene =========================
 
-        game.pushScene(choiceScene);
 
 
 
