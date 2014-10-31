@@ -62,8 +62,16 @@ window.onload = function() {
 
 
         //============ Starte Define Object Classes ===============
-        // Bow 
-        var Bow = Class.create(Sprite,{
+        var Background = Class.create(Sprite,{
+            initialize : function(config) {
+                Sprite.apply(this, [480, 640]);
+
+                this.image = config.img;
+                this.frame = config.frame || 0;
+            }
+        });
+
+       var Bow = Class.create(Sprite,{
             initialize : function(config) {
                 Sprite.apply(this, [125, 60]);
                 
@@ -120,16 +128,20 @@ window.onload = function() {
             }
         });
 
-        var Straw = Class.create(Sprite,{
+        var Box = Class.create(Sprite,{
             initialize : function(config) {
-                Sprite.apply(this, [125, 300]);
+                Sprite.apply(this, [112, 150]);
+                this.x = 0;
+                this.y = 490;
                 
-                this.image = game.assets[STRAW_IMAGE];
-                this.frame = 3;
-                this.x = 145;
-                this.y = 100;
+                this.image = game.assets[BOX_IMAGE];
+                this.frame = 0;
 
-                choiceScene.addChild(this);
+                this.addEventListener(Event.ADDED_TO_SCENE, function(evt){
+                    this.tl.moveBy(368, 0, Math.floor(Math.random()*(45-15))+15)
+                           .moveBy(-368, 0, Math.floor(Math.random()*(45-15))+15)
+                           .loop();
+                });
             }
         });
 
@@ -168,38 +180,26 @@ window.onload = function() {
                     {
                         config.box.tl.pause();
                         this.clearEventListener();
-                        this.splash();
+                        choiceScene.addChild(config.juice);
                         // after splash finishes, move to next scene
-                        choiceScene.tl.delay(120)
+                        choiceScene.tl.delay(65)
                                       .then(function(){game.replaceScene(rescueScene);});
                         
                     }
                 });
-            },
-
-            splash : function() {
-                console.log("splash triggered")
-                var bg = new Sprite(480, 640);
-                bg.image = game.assets[SPLASH_IMAGE];
-                bg.frame = Utility.flashing(30, 1, 0, 1, false, false).concat(Utility.flashing(30, 1, 2, 3, false, true));
-                choiceScene.addChild(bg);
             }
         });
 
-        var Box = Class.create(Sprite,{
+        var Straw = Class.create(Sprite,{
             initialize : function(config) {
-                Sprite.apply(this, [112, 150]);
-                this.x = 0;
-                this.y = 490;
+                Sprite.apply(this, [125, 300]);
                 
-                this.image = game.assets[BOX_IMAGE];;
-                this.frame = 0;
+                this.image = game.assets[STRAW_IMAGE];
+                this.frame = 3;
+                this.x = 145;
+                this.y = 100;
 
-                this.addEventListener(Event.ADDED_TO_SCENE, function(evt){
-                    this.tl.moveBy(368, 0, Math.floor(Math.random()*(45-15))+15)
-                           .moveBy(-368, 0, Math.floor(Math.random()*(45-15))+15)
-                           .loop();
-                });
+                choiceScene.addChild(this);
             }
         });
         // ================== End Define Object Classes ==================
@@ -228,9 +228,16 @@ window.onload = function() {
 
         var frameStack = [];
 
+        var juice = new Background({
+            img        : game.assets[SPLASH_IMAGE],
+            frame      : Utility.flashing(15, 1, 0, 1, false, false)
+                                .concat(Utility.flashing(15, 1, 2, 3, false, true))
+        });
+
         var hand = new Hand({
             straw      : straw,
             box        : box,
+            juice      : juice,
             frameStack : frameStack
         });
 
@@ -254,6 +261,14 @@ window.onload = function() {
         game.pushScene(choiceScene);
 
         // ==================  End of Choice Scene =========================
+
+        // === Rescue
+        var fixedJuice = new Background({
+            img   : game.assets[SPLASH_IMAGE],
+            frame   : 3
+        });
+
+        rescueScene.addChild(fixedJuice);
 
 
 
