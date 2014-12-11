@@ -271,9 +271,9 @@ window.onload = function() {
                     tags.addChild(t);
                 }
                 tags.childNodes[0].text = '-10p/-50p/-1 life';
-                tags.childNodes[1].text = '+10p/-50p';
+                tags.childNodes[1].text = '+10p/+50p';
                 tags.childNodes[2].text = '+100p/+200p';
-                tags.childNodes[3].text = '+1 life/+1 life + 300p';
+                tags.childNodes[3].text = '+1 life/+1 life + 300p<br>Harmless!';
                 tags.childNodes[4].text = 'Memory!';
 
                 var tag2 = new Label("Ready? Tap to Start!");
@@ -347,22 +347,120 @@ window.onload = function() {
                 },
 
                 decreaseLife : function() {
-                    console.log(this.nLife);
-                    if(this.nLife > 0) {
-                        this.childNodes[this.nLife-1].frame = 8;
-                        --this.nLife;
+                    --this.nLife;
+                    if(this.nLife > 2) {
+                        this.removeChild(this.lastChild);
+                    } else if(this.nLife > 0) {
+                        this.childNodes[this.nLife].frame = 8;
+                    } else {
+                        this.childNodes[0].frame = 8;
+                        this.died();
                     }
                 },
 
                 increaseLife : function() {
-                    if(this.nLife > 2) {
-                        
+                    ++this.nLife;
+                    if(this.nLife > 10) {
+                        this.nLife = 10;
+                    } else if (this.nLife > 3) {
+                        var heart = new Sprite(45, 40);
+                        heart.image = game.assets[BORDER_IMAGE];
+                        heart.frame = 9;
+                        heart.scaleX = 0.5;
+                        heart.scaleY = 0.5;
+                        heart.x = 5 + (this.nLife-1) * 25;
+                        this.addChild(heart);
+                    } else {
+                        this.childNodes[this.nLife-1].frame = 9;
                     }
-                }
+                },
 
+                died : function() {
+                    console.log("you're died");
+                }
 
         });
 
+
+        var FallingObj = Class.create(Sprite, {
+            initialize : function(config){
+                Sprite.apply(this, [120, 119]);
+
+                this.image = game.assets[ICON_IMAGE];
+                this.frame = config.frame;
+
+                this.x = Math.random() * 360;
+
+                this.scoreChange = config.scoreChange ? config.scoreChange : 0;
+                this.lifeChange = config.lifeChange ? config.lifeChange : 0;
+
+                this.addEventListener(Event.ENTER_FRAME, function(evt){
+                    // falling down
+                    this.y += config.speed * evt.elapsed * 0.001;
+                    if(config.rotationSpeed) {
+                        this.rotation += config.rotationSpeed * evt.elapsed * 0.001;           
+                    }
+                    if(this.y > game.height) {
+                        this.parentNode.removeChild(this);
+                        return;        
+                    }
+                    // collision
+                    if(this.intersect(this.parentNode.player)) {
+                        if(config.harmlessOn) {
+                            this.parentNode.player.harmlessMode = 1;
+                        }
+                        if(this.parentNode.player.harmlessMode) {
+                            (this.scoreChange && this.scoreChange > 0) ? 
+                                this.parentNode.score += this.scoreChange : {};
+                            (this.lifeChange && this.lifeChange > 0) ?
+                                this.parentNode.lifeBar.increaseLife() : {};
+                        } else {
+                            this.scoreChange ? this.parentNode.score += this.scoreChange : {};
+                            this.lifeChange ? (this.lifeChange > 0 ? this.parentNode.lifeBar.increaseLife()
+                                                                   : this.parentNode.lifeBar.decreaseLife())
+                                            : {};
+                        }
+                        this.parentNode.removeChild(this); 
+                    }
+                });
+            }
+        });
+
+        var Player = Class.create(Sprite, {
+            initialize : function(){
+                Sprite.apply(this, [120, 120]);
+
+                this.image = game.assets[ICON_IMAGE];
+                this.frame = 10;
+
+                this.x = 240 - 60;
+                this.y = 640 - 120;
+
+                this.harmlessMode = 0;
+
+                this.addEventListener(Event.TOUCH_MOVE, function(evt){
+                    this.x = evt.x - 60;
+                });
+
+                this.addEventListener(Event.ENTER_FRAME, function(evt){
+                    if(this.harmlessMode) {
+                        this.tl.then(function(){
+                                        console.log("harmless start");
+                                        this.frame = 11;
+                                    })
+                               .delay(120)
+                               .then(function(){
+                                        console.log("harmless end");
+                                        this.frame = 10;
+                                        this.harmlessMode = 0;
+                                    })
+                               .waitUntil(function(){
+                                        return (this.harmlessMode === 1);
+                                    });
+                    }
+                });
+            }
+        });
 
         var Falling = Class.create(Group, {
             initialize : function(){
@@ -380,13 +478,108 @@ window.onload = function() {
                 label.font = '500px';
                 label.x = 10;
                 label.y = 5;
+                
+                this.player = new Player();
 
-                var lifeBar = new Life();
+                this.lifeBar = new Life();
+                this.score = 0;
+
+                var scoreLabel = new Label('0');
+                scoreLabel.font = '16px';
+                scoreLabel.x = 55;
+                scoreLabel.y = 5;
 
                 this.addChild(bd);
                 this.addChild(label);
-                this.addChild(lifeBar);
+                this.addChild(scoreLabel);
 
+                this.addChild(this.lifeBar);
+                this.addChild(this.player);
+
+                this.addEventListener(Event.ENTER_FRAME, function(evt){
+                    scoreLabel.text = this.score;
+                });
+
+                this.tl.then(this.dropItem)
+                       .delay(30)
+                       .loop();
+
+            },
+
+            dropItem : function(){
+                var selector = Math.floor(Math.random() * 8 + 0.5);
+                var item;
+                switch(selector) {
+                    case 0 :  
+                        item = new FallingObj({
+                                                frame : 0,
+                                                scoreChange : -10,
+                                                speed : 300,
+                                                rotationSpeed : 190
+                                            });
+                        break;
+                    case 1 :  
+                        item = new FallingObj({
+                                                frame : 1,
+                                                scoreChange : -50,
+                                                speed : 200,
+                                                rotationSpeed : 140
+                                            });
+                        break;
+                    case 2 :  
+                        item = new FallingObj({
+                                                frame : 2,
+                                                lifeChange : -1,
+                                                speed : 190
+                                            });
+                        break;
+                    case 3 :  
+                        item = new FallingObj({
+                                                frame : 3,
+                                                scoreChange : +10,
+                                                speed : 300,
+                                                rotationSpeed : 190
+                                            });
+                        break;
+                    case 4 :  
+                        item = new FallingObj({
+                                                frame : 4,
+                                                scoreChange : +50,
+                                                speed : 300,
+                                                rotationSpeed : 190
+                                            });
+                        break;
+                    case 5 :  
+                        item = new FallingObj({
+                                                frame : 5,
+                                                scoreChange : +100,
+                                                speed : 300
+                                            });
+                        break;
+                    case 6 :  
+                        item = new FallingObj({
+                                                frame : 6,
+                                                scoreChange : +200,
+                                                speed : 300
+                                            });
+                        break;
+                    case 7 :  
+                        item = new FallingObj({
+                                                frame : 7,
+                                                lifeChange : +1,
+                                                speed : 300
+                                            });
+                        break;
+                    case 8 :  
+                        item = new FallingObj({
+                                                frame : 8,
+                                                lifeChange : +1,
+                                                harmlessOn : 1,
+                                                speed : 300
+                                            });
+                        break;
+                };
+                this.addChild(item);
             }
         });
         // ================== End Define Object Classes ==================
