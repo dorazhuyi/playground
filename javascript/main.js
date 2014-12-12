@@ -137,7 +137,18 @@ window.onload = function() {
                     {
                         this.x = config.target.x;
                         this.y = config.target.y;
-                        config.message.changeMessage("literally, the gayest");
+
+                        switch(this.frame) {
+                            case 0:
+                                config.message.changeMessage("BOWS!");
+                                break;
+                            case 1:
+                                config.message.changeMessage("Still, BOWS!");
+                                break;
+                            case 2:
+                                config.message.changeMessage("Wut?");
+                                break;
+                        }
 
                         if(!this.isReset) {
                             config.frameStack.push(this.frame);
@@ -174,8 +185,8 @@ window.onload = function() {
                 this.frame = 0;
 
                 this.addEventListener(Event.ADDED_TO_SCENE, function(evt){
-                    this.tl.moveBy(368, 0, Math.floor(Math.random()*(45-10))+10)
-                           .moveBy(-368, 0, Math.floor(Math.random()*(45-10))+10)
+                    this.tl.moveBy(368, 0, Math.floor(Math.random()*(35-15))+15)
+                           .moveBy(-368, 0, Math.floor(Math.random()*(35-15))+15)
                            .loop();
                 });
             }
@@ -217,6 +228,7 @@ window.onload = function() {
                         && this.y > 180 + (490 - 400) && this.preY < 180 + (490 - 400)
                         && config.box.x > (145 - 112/2) && config.box.x < (145 + 112/2))
                     {
+                        config.msg.changeMessage('Jews box <br> SUCCESS!');
                         config.box.tl.pause();
                         this.clearEventListener();
                         choiceScene.addChild(config.juice);
@@ -241,6 +253,8 @@ window.onload = function() {
                 choiceScene.addChild(this);
             }
         });
+
+        // Stage 2
 
         var Instruction = Class.create(Group, {
             initialize : function() {
@@ -354,7 +368,9 @@ window.onload = function() {
                         this.childNodes[this.nLife].frame = 8;
                     } else {
                         this.childNodes[0].frame = 8;
-                        this.died();
+
+                        console.log("you're died");
+                        this.parentNode.diedDialog();
                     }
                 },
 
@@ -373,14 +389,25 @@ window.onload = function() {
                     } else {
                         this.childNodes[this.nLife-1].frame = 9;
                     }
-                },
-
-                died : function() {
-                    console.log("you're died");
                 }
 
         });
 
+        var scoreTag = Class.create(Label, {
+            initialize : function(config) {
+                Label.apply(this);
+
+                this.text = config.text;
+                this.color = config.color;
+
+                this.addEventListener(Event.ENTER_FRAME, function(evt){
+                    this.tl.delay(15)
+                           .then(function(){
+                                this.parentNode.removeChild(this);
+                           });
+                });
+            }
+        });
 
         var FallingObj = Class.create(Sprite, {
             initialize : function(config){
@@ -394,6 +421,13 @@ window.onload = function() {
                 this.scoreChange = config.scoreChange ? config.scoreChange : 0;
                 this.lifeChange = config.lifeChange ? config.lifeChange : 0;
 
+                var tag = new scoreTag({
+                    text : config.text,
+                    color : config.color
+                });
+
+                tag.textAlign = 'center';
+
                 this.addEventListener(Event.ENTER_FRAME, function(evt){
                     // falling down
                     this.y += config.speed * evt.elapsed * 0.001;
@@ -406,15 +440,24 @@ window.onload = function() {
                     }
                     // collision
                     if(this.intersect(this.parentNode.player)) {
+                        tag.x = this.x;
+                        tag.y = this.y + 60;
+
                         if(config.harmlessOn) {
                             this.parentNode.player.harmlessMode = 1;
                         }
+
                         if(this.parentNode.player.harmlessMode) {
-                            (this.scoreChange && this.scoreChange > 0) ? 
-                                this.parentNode.score += this.scoreChange : {};
-                            (this.lifeChange && this.lifeChange > 0) ?
-                                this.parentNode.lifeBar.increaseLife() : {};
+                            if(this.scoreChange && this.scoreChange > 0) {
+                                this.parentNode.score += this.scoreChange;
+                                rescueScene.addChild(tag);
+                            }
+                            if(this.lifeChange && this.lifeChange > 0) {
+                                this.parentNode.lifeBar.increaseLife();
+                                rescueScene.addChild(tag);
+                            }
                         } else {
+                            rescueScene.addChild(tag);
                             this.scoreChange ? this.parentNode.score += this.scoreChange : {};
                             this.lifeChange ? (this.lifeChange > 0 ? this.parentNode.lifeBar.increaseLife()
                                                                    : this.parentNode.lifeBar.decreaseLife())
@@ -506,76 +549,127 @@ window.onload = function() {
 
             },
 
+            diedDialog : function() {
+                var title  = new Label('YOU ARE DIED!');
+
+                title.x = 140;
+                title.y = 300;
+
+                var subtitle = new Label('Tap to retry');
+                subtitle.x = 140;
+                subtitle.y = 330;
+
+                rescueScene.addChild(title);
+                rescueScene.addChild(subtitle);
+
+                this.tl.pause();
+
+                rescueScene.addEventListener(Event.TOUCH_END, function(evt){
+                    rescueScene.removeChild(subtitle);
+                    rescueScene.removeChild(title);
+                    rescueScene.removeChild(rescueScene.lastChild);
+                    rescueScene.addChild(new Falling());
+                    rescueScene.clearEventListener();
+                });
+            },
+
             dropItem : function(){
-                var selector = Math.floor(Math.random() * 8 + 0.5);
+                var selector = Math.random();
                 var item;
-                switch(selector) {
-                    case 0 :  
+                switch(true) {
+                    // chair 20%
+                    case (selector >=0 && selector < 0.2) :
                         item = new FallingObj({
                                                 frame : 0,
-                                                scoreChange : -10,
+                                                scoreChange : -5,
                                                 speed : 300,
-                                                rotationSpeed : 190
+                                                rotationSpeed : 190,
+                                                text : '-5 <br> OMG Strike me!',
+                                                color : 'red'
                                             });
                         break;
-                    case 1 :  
+                    // table 20%
+                    case (selector >= 0.2 && selector < 0.4) :
                         item = new FallingObj({
                                                 frame : 1,
-                                                scoreChange : -50,
+                                                scoreChange : -10,
                                                 speed : 200,
-                                                rotationSpeed : 140
+                                                rotationSpeed : 140,
+                                                text : '-10 <br> Hebrew abuse!',
+                                                color : 'red'
                                             });
                         break;
-                    case 2 :  
+                    // light 15%
+                    case (selector >= 0.4 && selector < 0.55) :
                         item = new FallingObj({
                                                 frame : 2,
                                                 lifeChange : -1,
-                                                speed : 190
+                                                speed : 190,
+                                                text : '-1 life <br> Light me on fire!',
+                                                color : 'red'
                                             });
                         break;
-                    case 3 :  
+                    // Cake 15%
+                    case (selector >= 0.55 && selector < 0.7) :
                         item = new FallingObj({
                                                 frame : 3,
-                                                scoreChange : +10,
+                                                scoreChange : +1,
                                                 speed : 300,
-                                                rotationSpeed : 190
+                                                rotationSpeed : 190,
+                                                text : '+1 <br> A cake is filming!',
+                                                color : 'green'
                                             });
                         break;
-                    case 4 :  
+                    // Juice Box 15%
+                    case (selector >= 0.7 && selector < 0.85) :
                         item = new FallingObj({
                                                 frame : 4,
-                                                scoreChange : +50,
+                                                scoreChange : +5,
                                                 speed : 300,
-                                                rotationSpeed : 190
+                                                rotationSpeed : 190,
+                                                text : '+5 <br> Jews! Be advised',
+                                                color : 'green'
                                             });
                         break;
-                    case 5 :  
+                    // Mike 5%
+                    case (selector >= 0.85 && selector < 0.9) :
                         item = new FallingObj({
                                                 frame : 5,
-                                                scoreChange : +100,
-                                                speed : 300
+                                                scoreChange : +10,
+                                                speed : 300,
+                                                text : '+10 <br> Mike Audet, the power bottom!',
+                                                color : 'green'
                                             });
                         break;
-                    case 6 :  
+                    // Mark 5%
+                    case (selector >= 0.9 && selector < 0.95) :
                         item = new FallingObj({
                                                 frame : 6,
-                                                scoreChange : +200,
-                                                speed : 300
+                                                scoreChange : +20,
+                                                speed : 300,
+                                                text : '+20 <br> I apologize!',
+                                                color : 'green'
                                             });
                         break;
-                    case 7 :  
+                    // Naomi 3%
+                    case (selector >= 0.95 && selector < 0.98) :
                         item = new FallingObj({
                                                 frame : 7,
                                                 lifeChange : +1,
-                                                speed : 300
+                                                speed : 300,
+                                                text : '+1 life <br> Will you accept this rose?',
+                                                color : 'blue'
                                             });
                         break;
-                    case 8 :  
+                    // Naomi 2%
+                    case (selector >= 0.98 && selector < 1) :
                         item = new FallingObj({
                                                 frame : 8,
                                                 lifeChange : +1,
                                                 harmlessOn : 1,
-                                                speed : 300
+                                                speed : 300,
+                                                text : '+1 life <br> Chans, voluptuous',
+                                                color : 'blue'
                                             });
                         break;
                 };
@@ -593,7 +687,7 @@ window.onload = function() {
             initY : 250,
             textColor : 'black',
             textFont  : '16px',
-            initText  : 'Bows!',
+            initText  : 'Hmmmmm...',
             border    : {
                             width  : 90,
                             height : 72,
@@ -602,6 +696,13 @@ window.onload = function() {
                         }
         });
         choiceScene.addChild(msg);
+
+        var icon = new Sprite(120, 120);
+        icon.image = game.assets[ICON_IMAGE];
+        icon.frame = 10;
+        icon.x = 345;
+        icon.y = 300;
+        choiceScene.addChild(icon);
 
         var box = new Box();
         var straw = new Straw();
@@ -625,6 +726,7 @@ window.onload = function() {
             straw      : straw,
             box        : box,
             juice      : juice,
+            msg        : msg,
             frameStack : frameStack
         });
 
@@ -643,7 +745,7 @@ window.onload = function() {
             
         }
 
-        hand.removeNodes = [bows[0], bows[1], bows[2], dottedBow];
+        hand.removeNodes = [bows[0], bows[1], bows[2], dottedBow, icon];
 
         game.pushScene(choiceScene);
 
