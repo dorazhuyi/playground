@@ -439,7 +439,7 @@ window.onload = function() {
                         return;        
                     }
                     // collision
-                    if(this.intersect(this.parentNode.player)) {
+                    if(this.intersect(this.parentNode.player) && this.parentNode.lifeBar.nLife > 0) {
                         tag.x = this.x;
                         tag.y = this.y + 60;
 
@@ -491,7 +491,7 @@ window.onload = function() {
                                         console.log("harmless start");
                                         this.frame = 11;
                                     })
-                               .delay(120)
+                               .delay(240)
                                .then(function(){
                                         console.log("harmless end");
                                         this.frame = 10;
@@ -541,6 +541,10 @@ window.onload = function() {
 
                 this.addEventListener(Event.ENTER_FRAME, function(evt){
                     scoreLabel.text = this.score;
+
+                    if(this.score >= 20) {
+                        this.lastChanllenge();
+                    }
                 });
 
                 this.tl.then(this.dropItem)
@@ -564,12 +568,14 @@ window.onload = function() {
 
                 this.tl.pause();
 
-                rescueScene.addEventListener(Event.TOUCH_END, function(evt){
-                    rescueScene.removeChild(subtitle);
-                    rescueScene.removeChild(title);
-                    rescueScene.removeChild(rescueScene.lastChild);
-                    rescueScene.addChild(new Falling());
-                    rescueScene.clearEventListener();
+                rescueScene.addEventListener(Event.TOUCH_START, function(evt){
+                    rescueScene.addEventListener(Event.TOUCH_END, function(evt){
+                        rescueScene.removeChild(subtitle);
+                        rescueScene.removeChild(title);
+                        rescueScene.removeChild(rescueScene.lastChild);
+                        rescueScene.addChild(new Falling());
+                        rescueScene.clearEventListener();
+                    });
                 });
             },
 
@@ -674,6 +680,17 @@ window.onload = function() {
                         break;
                 };
                 this.addChild(item);
+            },
+
+            lastChanllenge : function(){
+                var mem = new FallingObj({
+                    frame : 11,
+                    speed : 100,
+                    text  : 'Teehee, was that pretty ok?'
+                });
+
+                this.tl.unloop()
+                       .then(function(){this.addChild(mem);});
             }
         });
         // ================== End Define Object Classes ==================
