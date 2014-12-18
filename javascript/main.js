@@ -683,14 +683,19 @@ window.onload = function() {
             },
 
             lastChanllenge : function(){
+                console.log('last!');
+                //this.removeEventListener(Event.ENTER_FRAME, function(evt){});
+                this.clearEventListener(Event.ENTER_FRAME);
+                console.log('hello');
+
                 var mem = new FallingObj({
-                    frame : 11,
-                    speed : 100,
+                    frame : 9,
+                    speed : 400,
                     text  : 'Teehee, was that pretty ok?'
                 });
 
-                this.tl.unloop()
-                       .then(function(){this.addChild(mem);});
+                this.tl.clear();
+                this.tl.delay()then(function(){console.log('hello?');this.addChild(mem);});
             }
         });
         // ================== End Define Object Classes ==================
