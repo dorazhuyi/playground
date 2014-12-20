@@ -119,7 +119,18 @@ window.onload = function() {
                 this.isReset = false;
 
                 this.addEventListener(Event.TOUCH_START, function(){
-                    config.message.changeMessage("Hmmmmm...");
+                    switch(this.frame) {
+                        case 0:
+                            config.message.changeMessage("BOWS!");
+                            break;
+                        case 1:
+                            config.message.changeMessage("Still, BOWS!");
+                            break;
+                        case 2:
+                            config.message.changeMessage("Wut?");
+                            break;
+                    }
+
                     if(this.within(config.target, 60/2)) {
                         this.isReset = true;
                     } else {
@@ -138,18 +149,6 @@ window.onload = function() {
                         this.x = config.target.x;
                         this.y = config.target.y;
 
-                        switch(this.frame) {
-                            case 0:
-                                config.message.changeMessage("BOWS!");
-                                break;
-                            case 1:
-                                config.message.changeMessage("Still, BOWS!");
-                                break;
-                            case 2:
-                                config.message.changeMessage("Wut?");
-                                break;
-                        }
-
                         if(!this.isReset) {
                             config.frameStack.push(this.frame);
                             config.frameStack.sort(function(a, b) {
@@ -164,6 +163,7 @@ window.onload = function() {
                         
                         if(this.isReset) {
                             config.frameStack.pop();
+                            config.message.changeMessage("Hmmmmm...");
                             if(config.frameStack.length < 1) {
                                 choiceScene.removeChild(config.hand);
                             }
@@ -683,19 +683,17 @@ window.onload = function() {
             },
 
             lastChanllenge : function(){
-                console.log('last!');
-                //this.removeEventListener(Event.ENTER_FRAME, function(evt){});
                 this.clearEventListener(Event.ENTER_FRAME);
-                console.log('hello');
 
                 var mem = new FallingObj({
                     frame : 9,
-                    speed : 400,
+                    speed : 40,
                     text  : 'Teehee, was that pretty ok?'
                 });
 
                 this.tl.clear();
-                this.tl.delay()then(function(){console.log('hello?');this.addChild(mem);});
+                this.tl.delay(30)
+                       .then(function(){this.addChild(mem);});
             }
         });
         // ================== End Define Object Classes ==================
@@ -705,8 +703,8 @@ window.onload = function() {
         // ==================  Start of Choice Scene =========================
 
         var msg = new Message({
-            initX : 345,
-            initY : 250,
+            initX : 365,
+            initY : 200,
             textColor : 'black',
             textFont  : '16px',
             initText  : 'Hmmmmm...',
@@ -722,8 +720,10 @@ window.onload = function() {
         var icon = new Sprite(120, 120);
         icon.image = game.assets[ICON_IMAGE];
         icon.frame = 10;
-        icon.x = 345;
-        icon.y = 300;
+        icon.x = 305;
+        icon.y = 270;
+        icon.scaleX = 0.8;
+        icon.scaleY = 0.8;
         choiceScene.addChild(icon);
 
         var box = new Box();
@@ -767,7 +767,7 @@ window.onload = function() {
             
         }
 
-        hand.removeNodes = [bows[0], bows[1], bows[2], dottedBow, icon];
+        hand.removeNodes = [bows[0], bows[1], bows[2], dottedBow];
 
         game.pushScene(choiceScene);
 
