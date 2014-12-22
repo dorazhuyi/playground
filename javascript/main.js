@@ -43,7 +43,7 @@ window.onload = function() {
     var BOWS_IMAGE  = "res/img/bows.png";
     var BOX_IMAGE = "res/img/box.png";
     var HANDS_IMAGE = "res/img/hands.png";
-    var ICON_IMAGE  = "res/img/icons.png";
+    var ICON_IMAGE  = "res/img/icons-60p.png";
     var JUICE_IMAGE = "res/img/juice.png";
     var STRAW_IMAGE = "res/img/straws.png";
     game.preload(BORDER_IMAGE);
@@ -53,14 +53,25 @@ window.onload = function() {
     game.preload(ICON_IMAGE);
     game.preload(JUICE_IMAGE);
     game.preload(STRAW_IMAGE);
-    
 
     game.onload = function() {
         console.log("Let's start!");
 
-        var titleScene, choiceScene, rescueScene;
+        var choiceScene, rescueScene;
         choiceScene = new Scene();
         rescueScene = new Scene();
+
+        //======= font info =======
+        var fontTable = {
+            sTitle   : '35px Impact, Sans-serif',
+            title    : '25px Impact, Sans-serif',
+            subtitle : '18px Sans-serif',
+            msg      : '16px serif',
+            tag      : '14px serif'
+        };
+
+        // ====== variables ========
+        var iconSize = 96;
 
 
         //============ Starte Define Object Classes ===============
@@ -89,6 +100,9 @@ window.onload = function() {
                 }
 
                 var label = new Label(config.initText);
+                if(config.border) {
+                    label.y = 15;
+                }
                 label.color = config.textColor;
                 label.font = config.textFont;
                 label.textAlign = 'center';
@@ -270,7 +284,7 @@ window.onload = function() {
 
                 var tag1 = new Label("Reach 1000 points to survive!");
                 tag1.color = 'black';
-                tag1.font = '20px Impact, sans-serif';
+                tag1.font = fontTable.title;
                 tag1.textAlign = 'center';
                 tag1.width = 400;
                 tag1.y = 90;
@@ -279,44 +293,48 @@ window.onload = function() {
                 for(var i=0; i<5; i++) {
                     var t = new Label();
                     t.color = 'black';
-                    t.font = '20px';
+                    t.font = fontTable.tag;
                     t.x = 240;
-                    t.y = 150 + i * 60;
+                    t.y = 150 + i * 65;
                     tags.addChild(t);
                 }
-                tags.childNodes[0].text = '-10p/-50p/-1 life';
-                tags.childNodes[1].text = '+10p/+50p';
-                tags.childNodes[2].text = '+100p/+200p';
-                tags.childNodes[3].text = '+1 life/+1 life + 300p<br>Harmless!';
-                tags.childNodes[4].text = 'Memory!';
+                tags.childNodes[0].text  = '-5p/-10p/-1 life';
+                tags.childNodes[0].color = 'red';
+                tags.childNodes[1].text  = '+1p/+5p';
+                tags.childNodes[1].color = 'green';
+                tags.childNodes[2].text  = '+10p/+20p';
+                tags.childNodes[2].color = 'green';
+                tags.childNodes[3].text  = '+1 life<br>+1 life + Harmless!';
+                tags.childNodes[3].color = 'blue';
+                tags.childNodes[4].text  = 'Memory!';
 
                 var tag2 = new Label("Ready? Tap to Start!");
                 tag2.color = 'black';
-                tag2.font = '20px Impact, sans-serif';
+                tag2.font = fontTable.title;
                 tag2.textAlign = 'center';
                 tag2.width = 400;
                 tag2.y = 480;
 
                 var legends = new Group();
                 for(var i=0; i<10; i++) {
-                    var img = new Sprite(120, 120);
+                    var img = new Sprite(iconSize, iconSize);
                     img.image = game.assets[ICON_IMAGE];
                     img.scaleX = 0.5;
                     img.scaleY = 0.5;
                     img.frame = i;
                     if(i<3) {
-                        img.x = i * 60;
+                        img.x = i * iconSize/2;
                     } else if (i<5) {
-                        img.x = (i-3) * 60;
-                        img.y = 65;
+                        img.x = (i-3) * iconSize/2 + iconSize/4;
+                        img.y = iconSize/2 + 5;
                     } else if (i<7) {
-                        img.x = (i-5) * 61;
-                        img.y = 130; 
+                        img.x = (i-5) * iconSize/2 + 5 + iconSize/4;
+                        img.y = 2 * (iconSize/2 + 5); 
                     } else if (i<9) {
-                        img.x = (i-7) * 61;
-                        img.y = 195;
+                        img.x = (i-7) * 65 + 30;
+                        img.y = 3 * (iconSize/2 + 5);
                     } else {
-                        img.x = 30;
+                        img.x = iconSize/2;
                         img.y = 260;
                     }
                     legends.y = 100;
@@ -400,6 +418,10 @@ window.onload = function() {
                 this.text = config.text;
                 this.color = config.color;
 
+                this.width = 120;
+
+                this.textAlign = 'center';
+
                 this.addEventListener(Event.ENTER_FRAME, function(evt){
                     this.tl.delay(15)
                            .then(function(){
@@ -411,12 +433,12 @@ window.onload = function() {
 
         var FallingObj = Class.create(Sprite, {
             initialize : function(config){
-                Sprite.apply(this, [120, 119]);
+                Sprite.apply(this, [iconSize, iconSize]);
 
                 this.image = game.assets[ICON_IMAGE];
                 this.frame = config.frame;
 
-                this.x = Math.random() * 360;
+                this.x = Math.random() * (480 - iconSize);
 
                 this.scoreChange = config.scoreChange ? config.scoreChange : 0;
                 this.lifeChange = config.lifeChange ? config.lifeChange : 0;
@@ -425,8 +447,6 @@ window.onload = function() {
                     text : config.text,
                     color : config.color
                 });
-
-                tag.textAlign = 'center';
 
                 this.addEventListener(Event.ENTER_FRAME, function(evt){
                     // falling down
@@ -471,18 +491,18 @@ window.onload = function() {
 
         var Player = Class.create(Sprite, {
             initialize : function(){
-                Sprite.apply(this, [120, 120]);
+                Sprite.apply(this, [iconSize, iconSize]);
 
                 this.image = game.assets[ICON_IMAGE];
                 this.frame = 10;
 
-                this.x = 240 - 60;
-                this.y = 640 - 120;
+                this.x = 240 - iconSize/2;
+                this.y = 640 - iconSize;
 
                 this.harmlessMode = 0;
 
                 this.addEventListener(Event.TOUCH_MOVE, function(evt){
-                    this.x = evt.x - 60;
+                    this.x = evt.x - iconSize/2;
                 });
 
                 this.addEventListener(Event.ENTER_FRAME, function(evt){
@@ -505,6 +525,26 @@ window.onload = function() {
             }
         });
 
+        var lastObj = Class.create(Sprite, {
+            initialize : function(){
+                Sprite.apply(this, [iconSize, iconSize]);
+
+                this.image = game.assets[ICON_IMAGE];
+                this.frame = 9;
+
+                this.tl.then(function(){this.x = Math.random() * (480 - iconSize); })
+                       .delay(30)
+                       .loop();
+
+                this.addEventListener(Event.ENTER_FRAME, function(evt){
+                    console.log(evt.elapsed * 0.001);
+                    this.y += 80 * evt.elapsed * 0.001;
+                    if(this.y > game.height) {
+                    }
+                });
+            }
+        });
+
         var Falling = Class.create(Group, {
             initialize : function(){
                 Group.apply(this);
@@ -518,7 +558,7 @@ window.onload = function() {
                 bd.y = 50;
 
                 var label = new Label('Point:<br>Life:');
-                label.font = '500px';
+                label.font = fontTable.tag;
                 label.x = 10;
                 label.y = 5;
                 
@@ -528,7 +568,7 @@ window.onload = function() {
                 this.score = 0;
 
                 var scoreLabel = new Label('0');
-                scoreLabel.font = '16px';
+                scoreLabel.font = fontTable.tag;
                 scoreLabel.x = 55;
                 scoreLabel.y = 5;
 
@@ -543,7 +583,7 @@ window.onload = function() {
                     scoreLabel.text = this.score;
 
                     if(this.score >= 20) {
-                        this.lastChanllenge();
+                        this.lastChallenge();
                     }
                 });
 
@@ -555,16 +595,29 @@ window.onload = function() {
 
             diedDialog : function() {
                 var title  = new Label('YOU ARE DIED!');
-
-                title.x = 140;
-                title.y = 300;
+                title.width = 200;
+                title.textAlign = 'center';
+                title.font = fontTable.sTitle;
+                title.x = 120;
+                title.y = 220;
 
                 var subtitle = new Label('Tap to retry');
-                subtitle.x = 140;
-                subtitle.y = 330;
+                subtitle.width = 200;
+                subtitle.textAlign = 'center';
+                subtitle.font = fontTable.subtitle;
+                subtitle.x = 120;
+                subtitle.y = 260;
 
                 rescueScene.addChild(title);
                 rescueScene.addChild(subtitle);
+
+                this.player.clearEventListener();
+
+                this.player.tl.hide()
+                              .delay(10)
+                              .show()
+                              .delay(10)
+                              .loop();
 
                 this.tl.pause();
 
@@ -647,7 +700,7 @@ window.onload = function() {
                                                 color : 'green'
                                             });
                         break;
-                    // Mark 5%
+                    // Mike 5%
                     case (selector >= 0.9 && selector < 0.95) :
                         item = new FallingObj({
                                                 frame : 6,
@@ -674,7 +727,7 @@ window.onload = function() {
                                                 lifeChange : +1,
                                                 harmlessOn : 1,
                                                 speed : 300,
-                                                text : '+1 life <br> Chans, voluptuous',
+                                                text : '+1 life harmless <br> Chans, voluptuous',
                                                 color : 'blue'
                                             });
                         break;
@@ -682,18 +735,10 @@ window.onload = function() {
                 this.addChild(item);
             },
 
-            lastChanllenge : function(){
+            lastChallenge : function(){
                 this.clearEventListener(Event.ENTER_FRAME);
-
-                var mem = new FallingObj({
-                    frame : 9,
-                    speed : 40,
-                    text  : 'Teehee, was that pretty ok?'
-                });
-
                 this.tl.clear();
-                this.tl.delay(30)
-                       .then(function(){this.addChild(mem);});
+                this.addChild(new lastObj());
             }
         });
         // ================== End Define Object Classes ==================
@@ -706,7 +751,7 @@ window.onload = function() {
             initX : 365,
             initY : 200,
             textColor : 'black',
-            textFont  : '16px',
+            textFont  : fontTable.msg,
             initText  : 'Hmmmmm...',
             border    : {
                             width  : 90,
@@ -717,7 +762,7 @@ window.onload = function() {
         });
         choiceScene.addChild(msg);
 
-        var icon = new Sprite(120, 120);
+        var icon = new Sprite(iconSize, iconSize);
         icon.image = game.assets[ICON_IMAGE];
         icon.frame = 10;
         icon.x = 305;
