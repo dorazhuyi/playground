@@ -427,7 +427,8 @@ window.onload = function() {
                 this.textAlign = 'center';
 
                 this.addEventListener(Event.ENTER_FRAME, function(evt){
-                    this.tl.delay(30)
+                    var dl = config.delay ? config.delay : 30;
+                    this.tl.delay(dl)
                            .then(function(){
                                 this.parentNode.removeChild(this);
                            });
@@ -555,7 +556,8 @@ window.onload = function() {
                     } else if(this.intersect(this.parentNode.player)) {
                         var tag = new scoreTag({
                             text : 'Teehee, was that pretty ok?',
-                            color : 'black'
+                            color : 'purple',
+                            delay : 45
                         });
                         tag.x = this.x;
                         tag.y = this.y + 60;
@@ -606,7 +608,7 @@ window.onload = function() {
                 this.addEventListener(Event.ENTER_FRAME, function(evt){
                     scoreLabel.text = this.score;
 
-                    if(this.score >= 20) {
+                    if(this.score >= 350) {
                         this.lastChallenge();
                     }
                 });
@@ -771,7 +773,7 @@ window.onload = function() {
                 hb.y = 60;
                 hb.scaleX = 0.1;
                 hb.scaleY = 0.1;
-                hb.tl.scaleTo(1, 30);
+                hb.tl.scaleTo(1, 45);
 
                 hb.addEventListener(Event.TOUCH_END, function(evt){
                     rescueScene.removeChild(rescueScene.lastChild);
