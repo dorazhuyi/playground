@@ -43,6 +43,7 @@ window.onload = function() {
     var BOWS_IMAGE  = "res/img/bows.png";
     var BOX_IMAGE = "res/img/box.png";
     var HANDS_IMAGE = "res/img/hands.png";
+    var HAPPY_BIRTHDAY = "res/img/hb.png";
     var ICON_IMAGE  = "res/img/icons-60p.png";
     var JUICE_IMAGE = "res/img/juice.png";
     var STRAW_IMAGE = "res/img/straws.png";
@@ -50,6 +51,7 @@ window.onload = function() {
     game.preload(BOWS_IMAGE);
     game.preload(BOX_IMAGE);
     game.preload(HANDS_IMAGE);
+    game.preload(HAPPY_BIRTHDAY);
     game.preload(ICON_IMAGE);
     game.preload(JUICE_IMAGE);
     game.preload(STRAW_IMAGE);
@@ -282,11 +284,12 @@ window.onload = function() {
                 ibd.x = 140;
                 ibd.y = 240;
 
-                var tag1 = new Label("Reach 1000 points to survive!");
+                var tag1 = new Label("Reach 500 points to survive!");
                 tag1.color = 'black';
                 tag1.font = fontTable.title;
                 tag1.textAlign = 'center';
                 tag1.width = 400;
+                tag1.x = -15;
                 tag1.y = 90;
 
                 var tags = new Group();
@@ -294,8 +297,8 @@ window.onload = function() {
                     var t = new Label();
                     t.color = 'black';
                     t.font = fontTable.tag;
-                    t.x = 240;
-                    t.y = 150 + i * 65;
+                    t.x = 200;
+                    t.y = 155 + i * iconSize * 2/3;
                     tags.addChild(t);
                 }
                 tags.childNodes[0].text  = '-5p/-10p/-1 life';
@@ -313,6 +316,7 @@ window.onload = function() {
                 tag2.font = fontTable.title;
                 tag2.textAlign = 'center';
                 tag2.width = 400;
+                tag2.x = -15;
                 tag2.y = 480;
 
                 var legends = new Group();
@@ -326,18 +330,18 @@ window.onload = function() {
                         img.x = i * iconSize/2;
                     } else if (i<5) {
                         img.x = (i-3) * iconSize/2 + iconSize/4;
-                        img.y = iconSize/2 + 5;
+                        img.y = iconSize/2 + 15;
                     } else if (i<7) {
                         img.x = (i-5) * iconSize/2 + 5 + iconSize/4;
-                        img.y = 2 * (iconSize/2 + 5); 
+                        img.y = 2 * (iconSize/2 + 15); 
                     } else if (i<9) {
-                        img.x = (i-7) * 65 + 30;
-                        img.y = 3 * (iconSize/2 + 5);
+                        img.x = (i-7) * iconSize/2 + 5 + iconSize/4;
+                        img.y = 3 * (iconSize/2 + 15);
                     } else {
                         img.x = iconSize/2;
-                        img.y = 260;
+                        img.y = 4 * (iconSize/2 + 15);
                     }
-                    legends.y = 100;
+                    legends.y = 120;
                     legends.addChild(img);
                 }
 
@@ -423,7 +427,7 @@ window.onload = function() {
                 this.textAlign = 'center';
 
                 this.addEventListener(Event.ENTER_FRAME, function(evt){
-                    this.tl.delay(15)
+                    this.tl.delay(30)
                            .then(function(){
                                 this.parentNode.removeChild(this);
                            });
@@ -461,7 +465,7 @@ window.onload = function() {
                     // collision
                     if(this.intersect(this.parentNode.player) && this.parentNode.lifeBar.nLife > 0) {
                         tag.x = this.x;
-                        tag.y = this.y + 60;
+                        tag.y = this.y;
 
                         if(config.harmlessOn) {
                             this.parentNode.player.harmlessMode = 1;
@@ -525,7 +529,7 @@ window.onload = function() {
             }
         });
 
-        var lastObj = Class.create(Sprite, {
+        var LastObj = Class.create(Sprite, {
             initialize : function(){
                 Sprite.apply(this, [iconSize, iconSize]);
 
@@ -537,10 +541,30 @@ window.onload = function() {
                        .loop();
 
                 this.addEventListener(Event.ENTER_FRAME, function(evt){
-                    console.log(evt.elapsed * 0.001);
                     this.y += 80 * evt.elapsed * 0.001;
+
                     if(this.y > game.height) {
+                        var tag = new scoreTag({
+                            text : 'Boo...Inappropriate',
+                            color : 'black'
+                        });
+                        tag.x = this.x;
+                        tag.y = 400;
+                        rescueScene.addChild(tag);
+                        this.y = 0;
+                    } else if(this.intersect(this.parentNode.player)) {
+                        var tag = new scoreTag({
+                            text : 'Teehee, was that pretty ok?',
+                            color : 'black'
+                        });
+                        tag.x = this.x;
+                        tag.y = this.y + 60;
+                        rescueScene.addChild(tag);
+                        this.parentNode.celebrate();
+                        this.parentNode.removeChild(this);
                     }
+
+
                 });
             }
         });
@@ -594,18 +618,18 @@ window.onload = function() {
             },
 
             diedDialog : function() {
-                var title  = new Label('YOU ARE DIED!');
-                title.width = 200;
+                var title  = new Label('QIN QINS DENIED!');
+                title.width = 400;
                 title.textAlign = 'center';
                 title.font = fontTable.sTitle;
-                title.x = 120;
-                title.y = 220;
+                title.x = 40;
+                title.y = 200;
 
-                var subtitle = new Label('Tap to retry');
-                subtitle.width = 200;
+                var subtitle = new Label('Please retry');
+                subtitle.width = 400;
                 subtitle.textAlign = 'center';
                 subtitle.font = fontTable.subtitle;
-                subtitle.x = 120;
+                subtitle.x = 40;
                 subtitle.y = 260;
 
                 rescueScene.addChild(title);
@@ -621,14 +645,12 @@ window.onload = function() {
 
                 this.tl.pause();
 
-                rescueScene.addEventListener(Event.TOUCH_START, function(evt){
-                    rescueScene.addEventListener(Event.TOUCH_END, function(evt){
-                        rescueScene.removeChild(subtitle);
-                        rescueScene.removeChild(title);
-                        rescueScene.removeChild(rescueScene.lastChild);
-                        rescueScene.addChild(new Falling());
-                        rescueScene.clearEventListener();
-                    });
+                rescueScene.addEventListener(Event.TOUCH_END, function(evt){
+                    rescueScene.removeChild(subtitle);
+                    rescueScene.removeChild(title);
+                    rescueScene.removeChild(rescueScene.lastChild);
+                    rescueScene.addChild(new Falling());
+                    rescueScene.clearEventListener(Event.TOUCH_END);
                 });
             },
 
@@ -736,9 +758,28 @@ window.onload = function() {
             },
 
             lastChallenge : function(){
+                //clear score recording event listener
                 this.clearEventListener(Event.ENTER_FRAME);
+                // stop falling items
                 this.tl.clear();
-                this.addChild(new lastObj());
+                this.addChild(new LastObj());
+            },
+
+            celebrate : function(){
+                var hb = new Sprite(480, 480);
+                hb.image = game.assets[HAPPY_BIRTHDAY];
+                hb.y = 60;
+                hb.scaleX = 0.1;
+                hb.scaleY = 0.1;
+                hb.tl.scaleTo(1, 30);
+
+                hb.addEventListener(Event.TOUCH_END, function(evt){
+                    rescueScene.removeChild(rescueScene.lastChild);
+                    rescueScene.addChild(new Falling());
+                    rescueScene.clearEventListener(Event.TOUCH_END);
+                });
+
+                this.addChild(hb);
             }
         });
         // ================== End Define Object Classes ==================
